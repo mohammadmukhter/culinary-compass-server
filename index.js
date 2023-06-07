@@ -33,7 +33,7 @@ async function run() {
 
 
     // all the collection 
-    const database = connect.db('culinaryCompass');
+    const database = client.db('culinaryCompass');
     const usersCollection = database.collection('users');
     // user create api
     app.post("/users", async(req, res)=> {
