@@ -99,9 +99,10 @@ async function run() {
             return res.status(403).send({error: true, message: 'Forbidden User'})
         }
        
-        const query = {email: email};
+        const query = {instructorEmail: email};
         
         const classesData = await classesCollection.find(query).toArray();
+        console.log(query)
         res.send(classesData)
     })
 
