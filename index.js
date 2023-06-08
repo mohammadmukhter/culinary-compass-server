@@ -104,6 +104,13 @@ async function run() {
         const classesData = await classesCollection.find(query).toArray();
         console.log(query)
         res.send(classesData)
+    });
+
+    // get all classes Data api
+    app.get("/allClasses", verifyUserToken, async(req,res)=> {
+        
+        const allClassesData = await classesCollection.find().toArray();
+        res.send(allClassesData);
     })
 
 
