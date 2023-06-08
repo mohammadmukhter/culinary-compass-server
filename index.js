@@ -53,11 +53,13 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
 
+
+    // JWT token Creator api
     app.post("/jwt", (req, res)=> {
         const payLoad = req.body;
         const token = jwt.sign({
             data: payLoad
-          }, process.env.JWT_SECRET_TOKEN, { expiresIn: '1h' });
+          }, process.env.JWT_SECRET_TOKEN, { expiresIn: '1hr' });
           res.send(token);
     });
 
@@ -84,7 +86,7 @@ async function run() {
     });
 
     // user role change api
-    app.patch("/users/:id", async(req, res)=> {
+    app.patch("/users/:id",verifyUserToken,  async(req, res)=> {
         const userId = req.params.id;
         const userRole = req.body;
         // console.log(userId, userRole);
@@ -112,6 +114,23 @@ async function run() {
         const insertedData = await classesCollection.insertOne(insertAbleData);
         res.status(200).send(insertedData);
     });
+
+    // classes status change api
+    app.patch("/classes/:id",verifyUserToken, async(req, res)=> {
+        const classId = req.params.id;
+        const classStatus = req.body.status;
+
+        const query = {_id: new ObjectId(classId)};
+        const updateAbleStatus = {
+            $set: {
+                status:classStatus,
+            },
+        }
+        const updatedClass = await classesCollection.updateOne(query, updateAbleStatus);
+        res.send(updatedClass);
+    });
+
+    
 
     // get specific email based classes data api
     app.get("/classes",verifyUserToken, async(req,res)=> {
