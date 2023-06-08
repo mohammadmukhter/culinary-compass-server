@@ -11,8 +11,8 @@ app.use(cors());
 app.use(express.json());
 
 const verifyUserToken = (req, res, next)=> {
-    const authorization = req.headers.Authorization;
-    console.log("token:" ,authorization);
+    const authorization = req.headers.authorization;
+    // console.log("token:" ,authorization);
 
     if(!authorization){
       return res.status(401).send({error: true, message: 'unauthorized access'});
