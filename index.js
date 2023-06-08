@@ -4,9 +4,30 @@ const port = process.env.PORT || 5000;
 const app = express();
 require('dotenv').config();
 const { MongoClient, ServerApiVersion } = require('mongodb');
+var jwt = require('jsonwebtoken');
 
+// all the middleware here
 app.use(cors());
 app.use(express.json());
+
+const verifyUserToken = (req, res, next)=> {
+    const authorization = req.headers.authorization;
+
+    if(!authorization){
+      return res.status(401).send({error: true, message: 'unauthorized access'});
+    }
+  
+    const token = authorization.split(' ')[1];
+    
+    jwt.verify(token, process.env.JWT_SECRET_TOKEN, (err, decoded)=>{
+      if(err){
+        return res.status(403).send({error: true, message: 'unauthorized access'});
+      }
+      req.decoded = decoded;
+      next()
+    });
+}
+
 
 app.get("/", (req,res)=> {
     res.send('server connected')
@@ -31,14 +52,23 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
 
+    app.post("/jwt", (req, res)=> {
+        const payLoad = req.body;
+        const token = jwt.sign({
+            data: payLoad
+          }, process.env.JWT_SECRET_TOKEN, { expiresIn: '1h' });
+          res.send(token);
+    });
 
     // all the collection 
     const database = client.db('culinaryCompass');
     const usersCollection = database.collection('users');
+    const classesCollection = database.collection('classes');
+
+
     // user create api
     app.post("/users", async(req, res)=> {
         const insertAbleUser = req.body;
-        console.log(insertAbleUser);
 
         const query = {email: insertAbleUser.email};
         const matchedData = await usersCollection.findOne(query);
@@ -51,6 +81,13 @@ async function run() {
         res.send(insertedUser);
 
     });
+
+    // classes insertion Api
+    app.post("/classes", verifyUserToken, async(req, res)=> {
+        const insertAbleData = req.body;
+        const insertedData = await classesCollection.insertOne(insertAbleData);
+        res.status(200).send(insertedData);
+    })
 
 
 
