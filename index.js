@@ -11,7 +11,8 @@ app.use(cors());
 app.use(express.json());
 
 const verifyUserToken = (req, res, next)=> {
-    const authorization = req.headers.authorization;
+    const authorization = req.headers.Authorization;
+    console.log("token:" ,authorization);
 
     if(!authorization){
       return res.status(401).send({error: true, message: 'unauthorized access'});
@@ -87,6 +88,21 @@ async function run() {
         const insertAbleData = req.body;
         const insertedData = await classesCollection.insertOne(insertAbleData);
         res.status(200).send(insertedData);
+    });
+
+    // get specific email based classes data api
+    app.get("/classes",verifyUserToken, async(req,res)=> {
+        const email = req.query.email;
+        const tokenEmail = req.decoded.data.email;
+        // console.log(req)
+        if(tokenEmail !== email){
+            return res.status(403).send({error: true, message: 'Forbidden User'})
+        }
+       
+        const query = {email: email};
+        
+        const classesData = await classesCollection.find(query).toArray();
+        res.send(classesData)
     })
 
 
