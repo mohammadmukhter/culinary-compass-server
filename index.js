@@ -3,7 +3,7 @@ const cors = require('cors');
 const port = process.env.PORT || 5000;
 const app = express();
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var jwt = require('jsonwebtoken');
 
 // all the middleware here
@@ -81,6 +81,29 @@ async function run() {
         const insertedUser = await usersCollection.insertOne(insertAbleUser)
         res.send(insertedUser);
 
+    });
+
+    // user role change api
+    app.patch("/users/:id", async(req, res)=> {
+        const userId = req.params.id;
+        const userRole = req.body;
+        // console.log(userId, userRole);
+        const query = {_id: new ObjectId(userId)};
+
+        const updateAbleData = {
+            $set:{
+                role: userRole.role,
+            },
+        }
+        const updatedUser = await usersCollection.updateOne(query, updateAbleData);
+        res.send(updatedUser);
+
+    });
+
+    // user get api data
+    app.get("/users",verifyUserToken, async(req,res)=> {
+        const usersData = await usersCollection.find().toArray();
+        res.send(usersData);
     });
 
     // classes insertion Api
