@@ -109,13 +109,13 @@ async function run() {
         res.send(usersData);
     });
 
-    // all approved Class get api
+    // all approved Class get api || PUBLIC API
     app.get("/approvedClasses", async(req, res)=> {
         const query = {status: 'approved'};
 
         const approvedClasses = await classesCollection.find(query).toArray();
         res.send(approvedClasses);
-    })
+    });
 
     // classes insertion Api
     app.post("/classes", verifyUserToken, async(req, res)=> {
@@ -186,7 +186,25 @@ async function run() {
 
         const insertedData = await selectedClassesCollection.insertOne(payLoadData);
         res.send(insertedData);
-    })
+    });
+
+    // get all the selected classes Api 
+    app.get("/selectedClasses",verifyUserToken,  async(req, res)=> {
+        const email = req.query.email;
+        const tokenEmail = req.decoded.data.email;
+
+        if(email !== tokenEmail){
+            return res.status(403).send({error: true, message: "Forbidden Access"})
+        };
+
+        const query = {
+            studentEmail: email,
+        };
+
+        const selectedData = await selectedClassesCollection.find(query).toArray();
+        res.status(200).send(selectedData);
+        
+    });
 
 
 
