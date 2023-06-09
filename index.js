@@ -183,6 +183,19 @@ async function run() {
     // selected Classes or cart classes add or insert api 
     app.post("/selectedClasses",verifyUserToken, async(req, res)=> {
         const payLoadData = req.body;
+        const classId = payLoadData.classId;
+        const studentEmail = payLoadData.studentEmail;
+
+        const query = {
+            classId: classId,
+            studentEmail: studentEmail
+        }
+
+        const matchedData = await selectedClassesCollection.findOne(query);
+
+        if(matchedData){
+            return res.send({error: true, message: 'Data Already exists'});
+        }
 
         const insertedData = await selectedClassesCollection.insertOne(payLoadData);
         res.send(insertedData);
