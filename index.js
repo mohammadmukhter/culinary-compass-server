@@ -71,6 +71,7 @@ async function run() {
     const usersCollection = database.collection('users');
     const classesCollection = database.collection('classes');
     const selectedClassesCollection = database.collection('selectedClasses');
+    const paymentsCollection = database.collection('payments');
 
 
     // user create api
@@ -222,7 +223,7 @@ async function run() {
         
     });
 
-    // payment api
+    // stripe payment intent create api
     app.post("/createPaymentIntent",verifyUserToken, async (req, res)=> {
         const {price} = req.body;
         const amount = price*100;
@@ -236,8 +237,15 @@ async function run() {
         res.send({
             clientSecret: paymentIntent.client_secret,
         });
-    })
+    });
 
+    // payment data store to database api
+    app.post("/payments",verifyUserToken, async(req, res)=>{
+        const insertAbleData = req.body;
+
+        const insertedData = await paymentsCollection.insertOne(insertAbleData);
+        res.send(insertedData);
+    })
 
 
     await client.db("admin").command({ ping: 1 });
