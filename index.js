@@ -130,7 +130,22 @@ async function run() {
         res.send(updatedClass);
     });
 
-    
+    // classes feedback change api
+    app.patch("/classesFeedback/:id",verifyUserToken, async(req, res)=> {
+        const classId = req.params.id;
+        const classFeedback = req.body.feedback;
+
+        const query = {_id: new ObjectId(classId)};
+        const updateAbleFeedback = {
+            $set: {
+                feedback:classFeedback,
+            },
+        }
+        const updatedClass = await classesCollection.updateOne(query, updateAbleFeedback);
+        res.send(updatedClass);
+    });
+
+
 
     // get specific email based classes data api
     app.get("/classes",verifyUserToken, async(req,res)=> {
@@ -144,7 +159,7 @@ async function run() {
         const query = {instructorEmail: email};
         
         const classesData = await classesCollection.find(query).toArray();
-        console.log(query)
+        // console.log(query)
         res.send(classesData)
     });
 
