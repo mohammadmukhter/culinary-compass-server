@@ -67,6 +67,7 @@ async function run() {
     const database = client.db('culinaryCompass');
     const usersCollection = database.collection('users');
     const classesCollection = database.collection('classes');
+    const selectedClassesCollection = database.collection('selectedClasses');
 
 
     // user create api
@@ -107,6 +108,14 @@ async function run() {
         const usersData = await usersCollection.find().toArray();
         res.send(usersData);
     });
+
+    // all approved Class get api
+    app.get("/approvedClasses", async(req, res)=> {
+        const query = {status: 'approved'};
+
+        const approvedClasses = await classesCollection.find(query).toArray();
+        res.send(approvedClasses);
+    })
 
     // classes insertion Api
     app.post("/classes", verifyUserToken, async(req, res)=> {
@@ -168,6 +177,15 @@ async function run() {
         
         const allClassesData = await classesCollection.find().toArray();
         res.send(allClassesData);
+    });
+
+
+    // selected Classes or cart classes add or insert api 
+    app.post("/selectedClasses",verifyUserToken, async(req, res)=> {
+        const payLoadData = req.body;
+
+        const insertedData = await selectedClassesCollection.insertOne(payLoadData);
+        res.send(insertedData);
     })
 
 
