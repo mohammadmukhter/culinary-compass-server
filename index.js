@@ -75,6 +75,7 @@ async function run() {
     const classesCollection = database.collection('classes');
     const selectedClassesCollection = database.collection('selectedClasses');
     const paymentsCollection = database.collection('payments');
+    const enrolledCollection = database.collection('enrolled');
 
 
 
@@ -299,7 +300,7 @@ async function run() {
         const matchedData = await selectedClassesCollection.findOne(query);
 
         if(matchedData){
-            return res.send({error: true, message: 'Data Already exists'});
+            return res.status(405).send({error: true, message: 'Already Selected!'});
         }
 
         const insertedData = await selectedClassesCollection.insertOne(payLoadData);
@@ -344,18 +345,42 @@ async function run() {
 
 
     // payment data store to database api || STUDENT PRIVATE API
-    app.post("/payments",verifyUserToken, verifyStudent, async(req, res)=>{
+     app.post("/payments",verifyUserToken, verifyStudent, async(req, res)=>{
         const insertAbleData = req.body;
         const selectedClassId = req.body.selectedClassId;
         const classId = req.body.classId;
+
 
         const selectQuery = {
             _id: new ObjectId(selectedClassId),
         }
 
+         // get enrolled classes data from select collection
+         const getEnrolledClassData = await selectedClassesCollection.findOne(selectQuery);
+         const enrolledInfo = {
+            className: getEnrolledClassData.className,
+            classId: getEnrolledClassData.classId,
+            classImage: getEnrolledClassData.classImage,
+            studentEmail: getEnrolledClassData.studentEmail,
+            instructorName: getEnrolledClassData.instructorName,
+            instructorEmail: getEnrolledClassData.instructorEmail,
+            price: getEnrolledClassData.price,
+            status: 'enrolled',
+        }
+
+
+        //  and then insert it enrolledClassCollection
+        const enrolledData = await enrolledCollection.insertOne(enrolledInfo);
+
+   
+
+
         // data deleted by selectedClassId from selectedClassesCollection
         const deletedDataFromSelectClasses =  await selectedClassesCollection.deleteOne(selectQuery);
 
+        
+        
+        
         const classQuery = {
             _id: new ObjectId(classId),
         }
@@ -366,16 +391,34 @@ async function run() {
                 availAbleSeat: -1,
             },
         }
-
         // data updated by classId from classesCollection
         const updatedClassData = await classesCollection.updateOne(classQuery, availableSeatData);
 
+       
+
         // payment data inserted to paymentsCollection
         const insertedData = await paymentsCollection.insertOne(insertAbleData);
-
         res.send({insertedData, deletedDataFromSelectClasses, updatedClassData});
     });
-    
+
+    // all Enrolled Classes Info Api
+    app.get("/enrolledClasses", verifyUserToken, verifyStudent, async(req, res)=> {
+        const email = req.query.email;
+        const tokenEmail = req.decoded.data.email;
+
+        if(email !== tokenEmail){
+            return res.status(403).send({error: true, message: "Forbidden Access!"});
+        }
+
+        const query = {
+            studentEmail: email,
+        }
+
+        const enrolledData = await enrolledCollection.find(query).toArray();
+        res.status(200).send(enrolledData);
+
+    });
+
 
 
     await client.db("admin").command({ ping: 1 });
