@@ -365,6 +365,7 @@ async function run() {
             instructorName: getEnrolledClassData.instructorName,
             instructorEmail: getEnrolledClassData.instructorEmail,
             price: getEnrolledClassData.price,
+            date: insertAbleData.date,
             status: 'enrolled',
         }
 
