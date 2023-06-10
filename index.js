@@ -113,6 +113,58 @@ async function run() {
         res.send(usersData);
     });
 
+
+    // isInstructor api here || instructor verifying api
+    // its respond data that a user is instructor? or not?
+    app.get("/users/isInstructor",verifyUserToken, async(req, res)=> {
+        const email= req.query.email;
+        const tokenEmail = req.decoded.data.email;
+
+        if(tokenEmail !== email){
+            return res.send({instructor: false})
+        }
+        const query = {email: email};
+        const getData = await usersCollection.findOne(query);
+
+        const userRole ={instructor: getData?.role === 'instructor'};
+        res.send(userRole);
+    });
+
+    // isAdmin api here || admin verifying api
+    // its respond data that a user is admin? or not?
+    app.get("/users/isAdmin",verifyUserToken, async(req, res)=> {
+        const email= req.query.email;
+        const tokenEmail = req.decoded.data.email;
+
+        if(tokenEmail !== email){
+            return res.send({admin: false})
+        }
+        const query = {email: email};
+        const getData = await usersCollection.findOne(query);
+
+        const userRole ={admin: getData?.role === 'admin'};
+        res.send(userRole);
+    });
+
+
+    // isStudent api here || student verifying api
+    // its respond data that a user is student? or not?
+    app.get("/users/isStudent",verifyUserToken, async(req, res)=> {
+        const email= req.query.email;
+        const tokenEmail = req.decoded.data.email;
+
+        if(tokenEmail !== email){
+            return res.send({student: false})
+        }
+        const query = {email: email};
+        const getData = await usersCollection.findOne(query);
+
+        const userRole ={student: getData?.role === 'student'};
+        res.send(userRole);
+    });
+
+
+
     // all approved Class get api || PUBLIC API
     app.get("/approvedClasses", async(req, res)=> {
         const query = {status: 'approved'};
