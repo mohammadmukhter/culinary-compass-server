@@ -242,9 +242,34 @@ async function run() {
     // payment data store to database api
     app.post("/payments",verifyUserToken, async(req, res)=>{
         const insertAbleData = req.body;
+        const selectedClassId = req.body.selectedClassId;
+        const classId = req.body.classId;
 
+        const selectQuery = {
+            _id: new ObjectId(selectedClassId),
+        }
+
+        // data deleted by selectedClassId from selectedClassesCollection
+        const deletedDataFromSelectClasses =  await selectedClassesCollection.deleteOne(selectQuery);
+
+        const classQuery = {
+            _id: new ObjectId(classId),
+        }
+
+        // decrement availAbleSeat filed value by 1
+        const availableSeatData = {
+            $inc:{
+                availAbleSeat: -1,
+            },
+        }
+
+        // data updated by classId from classesCollection
+        const updatedClassData = await classesCollection.updateOne(classQuery, availableSeatData);
+
+        // payment data inserted to paymentsCollection
         const insertedData = await paymentsCollection.insertOne(insertAbleData);
-        res.send(insertedData);
+
+        res.send({insertedData, deletedDataFromSelectClasses, updatedClassData});
     })
 
 
