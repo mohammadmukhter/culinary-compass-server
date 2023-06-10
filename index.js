@@ -66,6 +66,9 @@ async function run() {
           res.send(token);
     });
 
+    
+
+
     // all the collection 
     const database = client.db('culinaryCompass');
     const usersCollection = database.collection('users');
@@ -74,7 +77,49 @@ async function run() {
     const paymentsCollection = database.collection('payments');
 
 
-    // user create api
+
+    // some Important middleware here
+    // there verifying a user is admin or student or instructor
+
+    // verify user is admin or not? || admin verify middleware
+    const verifyAdmin = async (req, res, next)=> {
+        const tokenEmail = req.decoded.data.email;
+        const query = {email: tokenEmail};
+
+        const userData = await usersCollection.findOne(query);
+        if(userData?.role !== 'admin'){
+            return res.status(403).send({error: true, message: "Forbidden Access!"})
+        }
+        next();
+    }
+
+    // verify user is instructor or not?  || instructor verify middleware
+    const verifyInstructor = async (req, res, next)=> {
+        const tokenEmail = req.decoded.data.email;
+        const query = {email: tokenEmail};
+
+        const userData = await usersCollection.findOne(query);
+        if(userData?.role !== 'instructor'){
+            return res.status(403).send({error: true, message: "Forbidden Access!"})
+        }
+        next();
+    }
+
+    // verify user is student or not? || student verify middleware
+    const verifyStudent = async (req, res, next)=> {
+        const tokenEmail = req.decoded.data.email;
+        const query = {email: tokenEmail};
+
+        const userData = await usersCollection.findOne(query);
+        if(userData?.role !== 'student'){
+            return res.status(403).send({error: true, message: "Forbidden Access!"})
+        }
+        next();
+    }
+
+
+
+    // user create api || public api
     app.post("/users", async(req, res)=> {
         const insertAbleUser = req.body;
 
@@ -90,8 +135,8 @@ async function run() {
 
     });
 
-    // user role change api
-    app.patch("/users/:id",verifyUserToken,  async(req, res)=> {
+    // user role change api || admin private api
+    app.patch("/users/:id",verifyUserToken, verifyAdmin,  async(req, res)=> {
         const userId = req.params.id;
         const userRole = req.body;
         // console.log(userId, userRole);
@@ -107,8 +152,8 @@ async function run() {
 
     });
 
-    // user get api data
-    app.get("/users",verifyUserToken, async(req,res)=> {
+    // user get api data || admin private api
+    app.get("/users", verifyUserToken, verifyAdmin, async(req,res)=> {
         const usersData = await usersCollection.find().toArray();
         res.send(usersData);
     });
@@ -173,15 +218,16 @@ async function run() {
         res.send(approvedClasses);
     });
 
-    // classes insertion Api
-    app.post("/classes", verifyUserToken, async(req, res)=> {
+    // classes insertion Api || instructor private api
+    app.post("/classes", verifyUserToken, verifyInstructor, async(req, res)=> {
         const insertAbleData = req.body;
         const insertedData = await classesCollection.insertOne(insertAbleData);
         res.status(200).send(insertedData);
     });
 
-    // classes status change api
-    app.patch("/classes/:id",verifyUserToken, async(req, res)=> {
+
+    // classes status change api || admin private api
+    app.patch("/classes/:id",verifyUserToken, verifyAdmin, async(req, res)=> {
         const classId = req.params.id;
         const classStatus = req.body.status;
 
@@ -195,8 +241,9 @@ async function run() {
         res.send(updatedClass);
     });
 
-    // classes feedback change api
-    app.patch("/classesFeedback/:id",verifyUserToken, async(req, res)=> {
+
+    // classes feedback change api || admin private api
+    app.patch("/classesFeedback/:id",verifyUserToken, verifyAdmin, async(req, res)=> {
         const classId = req.params.id;
         const classFeedback = req.body.feedback;
 
@@ -212,8 +259,8 @@ async function run() {
 
 
 
-    // get specific email based classes data api
-    app.get("/classes",verifyUserToken, async(req,res)=> {
+    // get specific email based classes data api || INSTRUCTOR PRIVATE API
+    app.get("/classes",verifyUserToken, verifyInstructor, async(req,res)=> {
         const email = req.query.email;
         const tokenEmail = req.decoded.data.email;
         // console.log(req)
@@ -228,7 +275,9 @@ async function run() {
         res.send(classesData)
     });
 
-    // get all classes Data api
+
+
+    // get all classes Data api || PUBLIC API
     app.get("/allClasses", verifyUserToken, async(req,res)=> {
         
         const allClassesData = await classesCollection.find().toArray();
@@ -236,8 +285,8 @@ async function run() {
     });
 
 
-    // selected Classes or cart classes add or insert api 
-    app.post("/selectedClasses",verifyUserToken, async(req, res)=> {
+    // selected Classes or cart classes add or insert api || STUDENT PRIVATE API
+    app.post("/selectedClasses",verifyUserToken, verifyStudent, async(req, res)=> {
         const payLoadData = req.body;
         const classId = payLoadData.classId;
         const studentEmail = payLoadData.studentEmail;
@@ -257,8 +306,9 @@ async function run() {
         res.send(insertedData);
     });
 
-    // get all the selected classes Api 
-    app.get("/selectedClasses",verifyUserToken,  async(req, res)=> {
+
+    // get all the selected classes Api || STUDENT PRIVATE API
+    app.get("/selectedClasses",verifyUserToken, verifyStudent, async(req, res)=> {
         const email = req.query.email;
         const tokenEmail = req.decoded.data.email;
 
@@ -272,11 +322,11 @@ async function run() {
 
         const selectedData = await selectedClassesCollection.find(query).toArray();
         res.status(200).send(selectedData);
-        
     });
 
-    // stripe payment intent create api
-    app.post("/createPaymentIntent",verifyUserToken, async (req, res)=> {
+
+    // stripe payment intent create api || STUDENT PRIVATE API
+    app.post("/createPaymentIntent",verifyUserToken, verifyStudent, async (req, res)=> {
         const {price} = req.body;
         const amount = price*100;
 
@@ -291,8 +341,10 @@ async function run() {
         });
     });
 
-    // payment data store to database api
-    app.post("/payments",verifyUserToken, async(req, res)=>{
+
+
+    // payment data store to database api || STUDENT PRIVATE API
+    app.post("/payments",verifyUserToken, verifyStudent, async(req, res)=>{
         const insertAbleData = req.body;
         const selectedClassId = req.body.selectedClassId;
         const classId = req.body.classId;
@@ -322,7 +374,8 @@ async function run() {
         const insertedData = await paymentsCollection.insertOne(insertAbleData);
 
         res.send({insertedData, deletedDataFromSelectClasses, updatedClassData});
-    })
+    });
+    
 
 
     await client.db("admin").command({ ping: 1 });
