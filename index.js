@@ -375,7 +375,6 @@ async function run() {
 
    
 
-
         // data deleted by selectedClassId from selectedClassesCollection
         const deletedDataFromSelectClasses =  await selectedClassesCollection.deleteOne(selectQuery);
 
@@ -402,7 +401,30 @@ async function run() {
         res.send({insertedData, deletedDataFromSelectClasses, updatedClassData});
     });
 
-    // all Enrolled Classes Info Api
+
+    // all payments Info get Api || STUDENT PRIVATE API
+    app.get("/paymentData", verifyUserToken, verifyStudent, async(req, res)=> {
+        const email = req.query.email;
+        const tokenEmail = req.decoded.data.email;
+
+        if(email !== tokenEmail){
+            return res.status(403).send({error: true, message: "Forbidden Access!"});
+        }
+
+        const query = {
+            studentEmail: email,
+        }
+
+        const paymentGetData = await paymentsCollection.find(query).toArray();
+
+        // sorted data by descending order by date
+        const sortedData = paymentGetData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        res.status(200).send(sortedData);
+
+    });
+
+
+    // all Enrolled Classes Info Api || STUDENT PRIVATE API
     app.get("/enrolledClasses", verifyUserToken, verifyStudent, async(req, res)=> {
         const email = req.query.email;
         const tokenEmail = req.decoded.data.email;
