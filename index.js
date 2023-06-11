@@ -219,6 +219,18 @@ async function run() {
         res.send(approvedClasses);
     });
 
+      // get all the popular classes || PUBLIC API
+      app.get("/popularClasses", async(req, res)=> {
+        const query = {};
+        const popularData = await classesCollection.find(query)
+        .sort({ enrolled: -1 })
+        .limit(6)
+        .toArray();
+
+        res.send(popularData);
+      });
+  
+
     // classes insertion Api || instructor private api
     app.post("/classes", verifyUserToken, verifyInstructor, async(req, res)=> {
         const insertAbleData = req.body;
@@ -278,13 +290,14 @@ async function run() {
 
 
 
-    // get all classes Data api || PUBLIC API
-    app.get("/allClasses", verifyUserToken, async(req,res)=> {
+    // get all classes Data api || ADMIN PRIVATE API
+    app.get("/allClasses", verifyUserToken, verifyAdmin, async(req,res)=> {
         
         const allClassesData = await classesCollection.find().toArray();
         res.send(allClassesData);
     });
 
+  
 
     // selected Classes or cart classes add or insert api || STUDENT PRIVATE API
     app.post("/selectedClasses",verifyUserToken, verifyStudent, async(req, res)=> {
@@ -344,7 +357,7 @@ async function run() {
                 selectedClassId: selectedItem ? selectedItem._id : null,
             }
         });
-        
+
         res.status(200).send(selectedData);
     });
 
