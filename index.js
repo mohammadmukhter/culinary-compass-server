@@ -258,6 +258,28 @@ async function run() {
         res.send(sortedInstructors);
       });
 
+
+    //   get Total class, student, instructor Data || PUBLIC API
+    app.get("/totalClassStudentInstructor", async(req, res)=> {
+        const instructors = await usersCollection.find({role: 'instructor'}).toArray();
+        const classesData = await classesCollection.find({status: 'approved'}).toArray();
+
+        const totalStudent = classesData.reduce((sum, data)=> {
+            return sum + data.enrolled;
+        },0);
+
+
+        const totalData = {
+            totalClasses: classesData.length,
+            totalStudents: totalStudent,
+            totalInstructors: instructors.length, 
+        }
+
+        // console.log(popularInstructors)
+       
+        res.send(totalData);
+    });
+
   
 
     // classes insertion Api || instructor private api
