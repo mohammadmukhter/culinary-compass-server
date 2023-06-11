@@ -229,6 +229,34 @@ async function run() {
 
         res.send(popularData);
       });
+
+
+      // get all the popular Instructors || PUBLIC API
+      app.get("/popularInstructors", async(req, res)=> {
+        const instructors = await usersCollection.find({role: 'instructor'}).toArray();
+        const classesData = await classesCollection.find().toArray();
+
+        const popularInstructors = instructors.map(item => {
+            const instructorClasses = classesData.filter(data=> data.instructorEmail === item.email);
+            const totalStudentOfInstructor = instructorClasses.reduce((sum, data)=> {
+                return sum + data.enrolled;
+            },0);
+            return {
+                _id: item._id,
+                instructorName: item.instructorName,
+                instructorEmail: item.email,
+                totalStudent: totalStudentOfInstructor,
+                totalClasses: instructorClasses.length,
+            }
+        });
+
+        const sortedInstructors = popularInstructors.sort((a, b) => b.totalStudent - a.totalStudent).slice(0, 6);
+
+        // console.log(popularInstructors)
+       
+        res.send(sortedInstructors);
+      });
+
   
 
     // classes insertion Api || instructor private api
