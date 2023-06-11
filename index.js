@@ -297,10 +297,15 @@ async function run() {
             studentEmail: studentEmail
         }
 
-        const matchedData = await selectedClassesCollection.findOne(query);
+        const selectedCollectionMatchedData = await selectedClassesCollection.findOne(query);
+        const enrolledCollectionMatchedData = await enrolledCollection.findOne(query);
 
-        if(matchedData){
+
+        if(selectedCollectionMatchedData){
             return res.status(405).send({error: true, message: 'Already Selected!'});
+        }
+        if(enrolledCollectionMatchedData){
+            return res.status(405).send({error: true, message: 'Already Enrolled!'});
         }
 
         const insertedData = await selectedClassesCollection.insertOne(payLoadData);
@@ -321,7 +326,25 @@ async function run() {
             studentEmail: email,
         };
 
-        const selectedData = await selectedClassesCollection.find(query).toArray();
+        const selectCollectionData = await selectedClassesCollection.find(query).toArray();
+
+        // console.log(selectCollectionData)
+        const finalQuery = {
+            _id: {
+                $in: selectCollectionData.map(data => new ObjectId(data.classId)),
+            },
+        }
+
+        const selectedClassData = await classesCollection.find(finalQuery).toArray();
+
+        const selectedData = selectedClassData.map(classData => {
+            const selectedItem = selectCollectionData.find(selectClass => selectClass.classId === classData._id.toString());
+            return {
+                ...classData,
+                selectedClassId: selectedItem ? selectedItem._id : null,
+            }
+        });
+        
         res.status(200).send(selectedData);
     });
 
@@ -386,13 +409,14 @@ async function run() {
         }
 
         // decrement availAbleSeat filed value by 1
-        const availableSeatData = {
+        const updateAbleClassData = {
             $inc:{
                 availAbleSeat: -1,
+                enrolled: +1,
             },
         }
         // data updated by classId from classesCollection
-        const updatedClassData = await classesCollection.updateOne(classQuery, availableSeatData);
+        const updatedClassData = await classesCollection.updateOne(classQuery, updateAbleClassData);
 
        
 
