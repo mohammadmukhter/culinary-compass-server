@@ -258,6 +258,30 @@ async function run() {
         res.send(sortedInstructors);
       });
 
+      // get all the Instructors  data|| PUBLIC API
+      app.get("/allInstructors", async(req, res)=> {
+        const instructors = await usersCollection.find({role: 'instructor'}).toArray();
+        const classesData = await classesCollection.find().toArray();
+
+        const InstructorsClassesAllInfo = instructors.map(item => {
+            const instructorClasses = classesData.filter(data=> data.instructorEmail === item.email);
+            const totalStudentOfInstructor = instructorClasses.reduce((sum, data)=> {
+                return sum + data.enrolled;
+            },0);
+            return {
+                _id: item._id,
+                instructorName: item.name,
+                instructorEmail: item.email,
+                instructorImage: item.photoUrl,
+                totalStudent: totalStudentOfInstructor,
+                totalClasses: instructorClasses.length,
+                allClassesName: instructorClasses.map(data => data.className)
+            }
+        });
+       
+        res.send(InstructorsClassesAllInfo);
+      });
+
 
     //   get Total class, student, instructor Data || PUBLIC API
     app.get("/totalClassStudentInstructor", async(req, res)=> {
