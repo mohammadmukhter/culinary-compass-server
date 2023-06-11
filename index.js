@@ -243,8 +243,9 @@ async function run() {
             },0);
             return {
                 _id: item._id,
-                instructorName: item.instructorName,
+                instructorName: item.name,
                 instructorEmail: item.email,
+                instructorImage: item.photoUrl,
                 totalStudent: totalStudentOfInstructor,
                 totalClasses: instructorClasses.length,
             }
