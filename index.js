@@ -9,6 +9,7 @@ const stripe = require('stripe')(process.env.PAYMENT_SECRET);
 var jwt = require('jsonwebtoken');
 
 
+
 // all the middleware here
 app.use(cors());
 app.use(express.json());
@@ -434,6 +435,18 @@ async function run() {
         });
 
         res.status(200).send(selectedData);
+    });
+
+
+    // delete selected class from selected class collection || STUDENT PRIVATE API
+    app.delete("/selectedClass/:id",verifyUserToken, verifyStudent, async(req, res)=> {
+        const id = req.params.id;
+        const query ={
+            _id: new ObjectId(id),
+        }
+
+        const deletedData = await selectedClassesCollection.deleteOne(query);
+        res.send(deletedData);
     });
 
 
